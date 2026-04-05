@@ -257,9 +257,9 @@
         
         <div id="dashboard-content" class="tab-content">
             <div class="kanban">
-                <div class="kanban-column">
+                <div class="kanban-column" data-status="lead">
                     <h3>线索 (2)</h3>
-                    <div class="customer-card">
+                    <div class="customer-card" data-id="1">
                         <div class="customer-name">张三</div>
                         <div class="customer-info">
                             公司：ABC公司<br>
@@ -267,11 +267,11 @@
                             评分：75
                         </div>
                         <div class="customer-actions">
-                            <button>查看</button>
-                            <button>跟进</button>
+                            <button onclick="viewCustomer('1')">查看</button>
+                            <button onclick="followCustomer('1')">跟进</button>
                         </div>
                     </div>
-                    <div class="customer-card">
+                    <div class="customer-card" data-id="2">
                         <div class="customer-name">李四</div>
                         <div class="customer-info">
                             公司：XYZ公司<br>
@@ -279,25 +279,25 @@
                             评分：85
                         </div>
                         <div class="customer-actions">
-                            <button>查看</button>
-                            <button>跟进</button>
+                            <button onclick="viewCustomer('2')">查看</button>
+                            <button onclick="followCustomer('2')">跟进</button>
                         </div>
                     </div>
                 </div>
                 
-                <div class="kanban-column">
+                <div class="kanban-column" data-status="following">
                     <h3>跟进 (0)</h3>
                 </div>
                 
-                <div class="kanban-column">
+                <div class="kanban-column" data-status="high-intent">
                     <h3>高意向 (0)</h3>
                 </div>
                 
-                <div class="kanban-column">
+                <div class="kanban-column" data-status="closed">
                     <h3>已成交 (0)</h3>
                 </div>
                 
-                <div class="kanban-column">
+                <div class="kanban-column" data-status="lost">
                     <h3>已流失 (0)</h3>
                 </div>
             </div>
@@ -684,6 +684,210 @@
         
         // 初始化数据管理页面
         updateDataPage();
+        
+        // 客户详情和跟进功能
+        function viewCustomer(customerId) {
+            const customer = appData.customers.find(c => c.id === customerId);
+            if (customer) {
+                showCustomerModal(customer);
+            }
+        }
+        
+        function followCustomer(customerId) {
+            const customer = appData.customers.find(c => c.id === customerId);
+            if (customer) {
+                // 更新客户状态为跟进中
+                customer.status = 'following';
+                customer.last_contact_at = new Date().toISOString();
+                customer.updated_at = new Date().toISOString();
+                
+                // 保存到本地存储
+                saveData(appData);
+                
+                // 更新界面
+                updateCustomerUI();
+                
+                // 显示跟进记录表单
+                showFollowUpModal(customer);
+            }
+        }
+        
+        function showCustomerModal(customer) {
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px;">
+                    <h3>客户详情</h3>
+                    <div style="margin: 20px 0;">
+                        <p><strong>姓名：</strong>${customer.name}</p>
+                        <p><strong>电话：</strong>${customer.phone || '未填写'}</p>
+                        <p><strong>公司：</strong>${customer.company || '未填写'}</p>
+                        <p><strong>来源：</strong>${customer.source || '未填写'}</p>
+                        <p><strong>状态：</strong>${getStatusText(customer.status)}</p>
+                        <p><strong>评分：</strong>${customer.ai_score || 0}</p>
+                        <p><strong>最后联系：</strong>${formatDate(customer.last_contact_at)}</p>
+                        <p><strong>创建时间：</strong>${formatDate(customer.created_at)}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <button onclick="this.closest('.modal').remove()" style="margin-right: 10px;">关闭</button>
+                        <button onclick="followCustomer('${customer.id}')" class="primary">跟进</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function showFollowUpModal(customer) {
+            // 创建跟进模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px;">
+                    <h3>跟进记录 - ${customer.name}</h3>
+                    <div class="form-group">
+                        <label>跟进内容</label>
+                        <textarea id="follow-up-content" rows="4" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>下次跟进时间</label>
+                        <input type="date" id="next-follow-up-date" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    <div class="form-group">
+                        <label>状态更新</label>
+                        <select id="status-update" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                            <option value="following">跟进中</option>
+                            <option value="high-intent">高意向</option>
+                            <option value="closed">已成交</option>
+                            <option value="lost">已流失</option>
+                        </select>
+                    </div>
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button onclick="this.closest('.modal').remove()" style="margin-right: 10px;">取消</button>
+                        <button onclick="saveFollowUp('${customer.id}')" class="primary">保存</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function saveFollowUp(customerId) {
+            const customer = appData.customers.find(c => c.id === customerId);
+            if (customer) {
+                const content = document.getElementById('follow-up-content').value;
+                const status = document.getElementById('status-update').value;
+                
+                // 更新客户状态
+                customer.status = status;
+                customer.last_contact_at = new Date().toISOString();
+                customer.updated_at = new Date().toISOString();
+                
+                // 保存跟进记录（这里简化处理，实际可以存储到单独的跟进记录表）
+                if (!customer.notes) {
+                    customer.notes = '';
+                }
+                customer.notes += `[${formatDate(new Date().toISOString())}] ${content}\n`;
+                
+                // 保存到本地存储
+                saveData(appData);
+                
+                // 更新界面
+                updateCustomerUI();
+                
+                // 关闭模态框
+                document.querySelector('.modal').remove();
+                
+                alert('跟进记录保存成功！');
+            }
+        }
+        
+        function updateCustomerUI() {
+            // 清空所有客户卡片
+            document.querySelectorAll('.kanban-column').forEach(column => {
+                // 保留标题，清空其他内容
+                const h3 = column.querySelector('h3');
+                column.innerHTML = '';
+                column.appendChild(h3);
+            });
+            
+            // 重新添加客户卡片
+            appData.customers.forEach(customer => {
+                const column = document.querySelector(`.kanban-column[data-status="${customer.status}"]`);
+                if (column) {
+                    const customerCard = document.createElement('div');
+                    customerCard.className = 'customer-card';
+                    customerCard.setAttribute('data-id', customer.id);
+                    customerCard.innerHTML = `
+                        <div class="customer-name">${customer.name}</div>
+                        <div class="customer-info">
+                            公司：${customer.company || '未填写'}<br>
+                            来源：${customer.source || '未填写'}<br>
+                            评分：${customer.ai_score || 0}
+                        </div>
+                        <div class="customer-actions">
+                            <button onclick="viewCustomer('${customer.id}')">查看</button>
+                            <button onclick="followCustomer('${customer.id}')">跟进</button>
+                        </div>
+                    `;
+                    column.appendChild(customerCard);
+                }
+            });
+            
+            // 更新各列数量
+            document.querySelectorAll('.kanban-column').forEach(column => {
+                const count = column.querySelectorAll('.customer-card').length;
+                const h3 = column.querySelector('h3');
+                const statusText = h3.textContent.split(' ')[0];
+                h3.textContent = `${statusText} (${count})`;
+            });
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'lead': '线索',
+                'following': '跟进中',
+                'high-intent': '高意向',
+                'closed': '已成交',
+                'lost': '已流失'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN');
+        }
+        
+        // 初始化客户UI
+        updateCustomerUI();
     </script>
 </body>
 </html>
