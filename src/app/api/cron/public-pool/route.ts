@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
 
 export async function POST(request: Request) {
   try {
@@ -8,48 +7,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // 检查是否为生产环境
+    if (process.env.NODE_ENV !== 'production') {
+      return NextResponse.json({
+        success: true,
+        message: 'Public pool recovery is disabled in non-production environment',
+        movedCount: 0,
+      })
+    }
+
+    // 导入 Supabase 客户端
+    const { createServerClient } = await import('@/lib/supabase')
     const supabase = createServerClient()
 
-    const { data: customersToMove, error: fetchError } = await supabase
+    // 使用数据库函数移动客户到公海池
+    const { error: functionError } = await supabase.rpc('move_to_public_pool')
+
+    if (functionError) {
+      throw functionError
+    }
+
+    // 获取移动的客户数量
+    const { data: movedCustomers, error: fetchError } = await supabase
       .from('customers')
-      .select('id, name, owner_id')
-      .not('owner_id', 'is', null)
-      .is('is_public', false)
-      .lt('last_contact_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .select('id')
+      .is('is_public', true)
+      .is('owner_id', null)
 
     if (fetchError) {
       throw fetchError
     }
 
-    if (!customersToMove || customersToMove.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No customers to move to public pool',
-        movedCount: 0,
-      })
-    }
-
-    const { error: updateError } = await supabase
-      .from('customers')
-      .update({
-        is_public: true,
-        owner_id: null,
-        status: 'lead',
-      })
-      .in(
-        'id',
-        customersToMove.map((c) => c.id)
-      )
-
-    if (updateError) {
-      throw updateError
-    }
+    const movedCount = movedCustomers ? movedCustomers.length : 0
 
     return NextResponse.json({
       success: true,
-      message: `Moved ${customersToMove.length} customers to public pool`,
-      movedCount: customersToMove.length,
-      customers: customersToMove,
+      message: `Moved ${movedCount} customers to public pool`,
+      movedCount,
     })
   } catch (error) {
     console.error('Error in public pool recovery:', error)
@@ -58,7 +52,9 @@ export async function POST(request: Request) {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     )
   }
 }

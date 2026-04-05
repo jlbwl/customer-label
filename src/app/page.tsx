@@ -6,27 +6,80 @@ import { CustomerKanban } from '@/components/CustomerKanban'
 import { AiSidebar } from '@/components/AiSidebar'
 import { QuickAddCustomer } from '@/components/QuickAddCustomer'
 import { PublicPoolMarket } from '@/components/PublicPoolMarket'
-import { supabase } from '@/lib/supabase'
 import type { Customer, PublicPoolCustomer } from '@/types'
 import { LayoutDashboard, Users } from 'lucide-react'
 
+// 模拟数据，用于构建时显示
+const mockCustomers: Customer[] = [
+  {
+    id: '1',
+    name: '张三',
+    phone: '13800138000',
+    company: 'ABC公司',
+    source: '官网',
+    status: 'lead',
+    owner_id: 'user1',
+    ai_score: 75,
+    last_contact_at: new Date().toISOString(),
+    notes: '对产品感兴趣',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_public: false
+  },
+  {
+    id: '2',
+    name: '李四',
+    phone: '13900139000',
+    company: 'XYZ公司',
+    source: '展会',
+    status: 'following',
+    owner_id: 'user1',
+    ai_score: 85,
+    last_contact_at: new Date().toISOString(),
+    notes: '正在评估方案',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_public: false
+  }
+]
+
+const mockPublicPool: PublicPoolCustomer[] = [
+  {
+    id: '3',
+    name: '王五',
+    phone: '13700137000',
+    company: 'DEF公司',
+    source: '推荐',
+    ai_score: 90,
+    last_contact_at: new Date().toISOString(),
+    created_at: new Date().toISOString()
+  }
+]
+
 export default function Home() {
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [publicPoolCustomers, setPublicPoolCustomers] = useState<PublicPoolCustomer[]>([])
+  const [customers, setCustomers] = useState<Customer[]>(mockCustomers)
+  const [publicPoolCustomers, setPublicPoolCustomers] = useState<PublicPoolCustomer[]>(mockPublicPool)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchCustomers()
-    fetchPublicPool()
+    // 只在浏览器环境中执行
+    if (typeof window !== 'undefined') {
+      import('@/lib/supabase').then(({ supabase }) => {
+        fetchCustomers(supabase)
+        fetchPublicPool(supabase)
+      })
+    } else {
+      setLoading(false)
+    }
   }, [])
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = async (supabase: any) => {
     try {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .is('owner_id', 'not.null')
+        .not('owner_id', 'is', null)
         .order('updated_at', { ascending: false })
 
       if (error) throw error
@@ -38,7 +91,7 @@ export default function Home() {
     }
   }
 
-  const fetchPublicPool = async () => {
+  const fetchPublicPool = async (supabase: any) => {
     try {
       const { data, error } = await supabase
         .from('customers')
@@ -61,7 +114,8 @@ export default function Home() {
     source?: string
   }) => {
     try {
-      const { error } = await supabase.from('customers').insert({
+      const { supabase } = await import('@/lib/supabase')
+      const { error } = await (supabase as any).from('customers').insert({
         ...customerData,
         status: 'lead',
         ai_score: 50,
@@ -69,7 +123,7 @@ export default function Home() {
       })
 
       if (error) throw error
-      await fetchCustomers()
+      fetchCustomers(supabase)
     } catch (error) {
       console.error('Error adding customer:', error)
     }
@@ -77,13 +131,14 @@ export default function Home() {
 
   const handleStatusChange = async (customerId: string, newStatus: Customer['status']) => {
     try {
-      const { error } = await supabase
+      const { supabase } = await import('@/lib/supabase')
+      const { error } = await (supabase as any)
         .from('customers')
         .update({ status: newStatus })
         .eq('id', customerId)
 
       if (error) throw error
-      await fetchCustomers()
+      fetchCustomers(supabase)
     } catch (error) {
       console.error('Error updating customer status:', error)
     }
@@ -91,7 +146,8 @@ export default function Home() {
 
   const handleClaimCustomer = async (customerId: string) => {
     try {
-      const { error } = await supabase
+      const { supabase } = await import('@/lib/supabase')
+      const { error } = await (supabase as any)
         .from('customers')
         .update({
           is_public: false,
@@ -101,8 +157,8 @@ export default function Home() {
         .eq('id', customerId)
 
       if (error) throw error
-      await fetchCustomers()
-      await fetchPublicPool()
+      fetchCustomers(supabase)
+      fetchPublicPool(supabase)
     } catch (error) {
       console.error('Error claiming customer:', error)
     }
