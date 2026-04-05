@@ -1293,6 +1293,26 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="quick-add" style="margin-top: 20px;">
+                <h4>Excel客户数据导入</h4>
+                <div class="import-export-section">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); font-size: 14px;">上传Excel文件</label>
+                        <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" onchange="importExcelCustomers(this)" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                        <p style="margin-top: 10px; font-size: 14px; color: var(--text-muted);">支持 .xlsx、.xls 和 .csv 格式的Excel文件</p>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; font-weight: 600; color: var(--text-primary);">Excel文件格式要求：</h5>
+                        <ul style="font-size: 13px; color: var(--text-muted); list-style-position: inside; line-height: 1.5;">
+                            <li>第一行必须是表头：姓名,电话,微信,公司,来源</li>
+                            <li>姓名和电话为必填字段</li>
+                            <li>微信、公司、来源为选填字段</li>
+                            <li>来源建议值：官网、社交媒体、朋友推荐、线下活动、其他</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -1494,6 +1514,179 @@
             document.body.removeChild(link);
 
             alert('客户数据导出成功！');
+        }
+        
+        // 导入Excel客户数据
+        function importExcelCustomers(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const fileName = file.name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            
+            // 检查文件类型
+            if (!['csv', 'xlsx', 'xls'].includes(fileExtension)) {
+                alert('请上传有效的Excel文件（.csv、.xlsx、.xls）！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    let customers = [];
+                    
+                    if (fileExtension === 'csv') {
+                        // 解析CSV文件
+                        customers = parseCSV(content);
+                    } else {
+                        // 对于Excel文件，提示用户将其另存为CSV格式
+                        alert('请将Excel文件另存为CSV格式后再导入！');
+                        return;
+                    }
+                    
+                    if (customers.length === 0) {
+                        alert('未找到有效的客户数据！');
+                        return;
+                    }
+                    
+                    // 导入客户数据
+                    let importedCount = 0;
+                    let existingCount = 0;
+                    
+                    customers.forEach(customerData => {
+                        // 检查客户是否已存在（通过电话号）
+                        const existingCustomer = appData.customers.find(c => c.phone === customerData.phone);
+                        if (existingCustomer) {
+                            existingCount++;
+                            return;
+                        }
+                        
+                        // 创建新客户
+                        const newCustomer = {
+                            id: Date.now().toString() + Math.floor(Math.random() * 1000),
+                            name: customerData.name,
+                            phone: customerData.phone,
+                            wechat: customerData.wechat || '',
+                            company: customerData.company || '',
+                            source: customerData.source || '其他',
+                            status: 'lead', // 默认状态为线索
+                            ai_score: 0,
+                            created_at: new Date().toISOString(),
+                            last_contact_at: null,
+                            tags: [],
+                            followups: []
+                        };
+                        
+                        // 计算客户评分
+                        calculateCustomerScore(newCustomer);
+                        
+                        appData.customers.push(newCustomer);
+                        importedCount++;
+                    });
+                    
+                    // 保存数据
+                    saveData(appData);
+                    
+                    // 刷新界面
+                    updateDashboard();
+                    
+                    alert(`客户数据导入成功！\n导入：${importedCount} 条\n已存在：${existingCount} 条`);
+                    
+                    // 清空文件输入
+                    input.value = '';
+                    
+                } catch (error) {
+                    console.error('导入失败:', error);
+                    alert('导入失败：' + error.message);
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('文件读取失败！');
+            };
+            
+            // 读取文件
+            reader.readAsText(file, 'UTF-8');
+        }
+        
+        // 解析CSV文件
+        function parseCSV(content) {
+            const lines = content.trim().split('\n');
+            if (lines.length < 2) {
+                throw new Error('CSV文件至少需要包含表头和一行数据！');
+            }
+            
+            // 解析表头
+            const headers = lines[0].trim().split(',').map(h => h.trim());
+            
+            // 验证表头
+            const requiredHeaders = ['姓名', '电话'];
+            for (const header of requiredHeaders) {
+                if (!headers.includes(header)) {
+                    throw new Error(`CSV文件缺少必要的表头：${header}`);
+                }
+            }
+            
+            const customers = [];
+            
+            // 解析数据行
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // 解析CSV行，处理带引号的字段
+                const values = parseCSVLine(line);
+                if (values.length < headers.length) {
+                    console.warn(`第 ${i+1} 行数据不完整，跳过`);
+                    continue;
+                }
+                
+                const customerData = {};
+                for (let j = 0; j < headers.length; j++) {
+                    customerData[headers[j]] = values[j] || '';
+                }
+                
+                // 验证必填字段
+                if (!customerData['姓名'] || !customerData['电话']) {
+                    console.warn(`第 ${i+1} 行缺少必填字段，跳过`);
+                    continue;
+                }
+                
+                customers.push({
+                    name: customerData['姓名'],
+                    phone: customerData['电话'],
+                    wechat: customerData['微信'],
+                    company: customerData['公司'],
+                    source: customerData['来源']
+                });
+            }
+            
+            return customers;
+        }
+        
+        // 解析CSV行，处理带引号的字段
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
         }
         
         // 数据备份管理
