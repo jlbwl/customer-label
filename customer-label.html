@@ -501,6 +501,54 @@
         document.querySelectorAll('button.primary').forEach(button => {
             button.addEventListener('click', function() {
                 if (this.textContent === '领取') {
+                    // 获取客户卡片
+                    const customerCard = this.closest('.customer-card');
+                    const customerName = customerCard.querySelector('.customer-name').textContent;
+                    const customerInfo = customerCard.querySelector('.customer-info').innerHTML;
+                    
+                    // 创建新客户卡片添加到线索列
+                    const newCustomerCard = document.createElement('div');
+                    newCustomerCard.className = 'customer-card';
+                    newCustomerCard.innerHTML = `
+                        <div class="customer-name">${customerName}</div>
+                        <div class="customer-info">${customerInfo}</div>
+                        <div class="customer-actions">
+                            <button>查看</button>
+                            <button>跟进</button>
+                        </div>
+                    `;
+                    
+                    // 添加到线索列
+                    const leadColumn = document.querySelector('.kanban-column:nth-child(1)');
+                    leadColumn.appendChild(newCustomerCard);
+                    
+                    // 更新线索数量
+                    const leadCount = leadColumn.querySelectorAll('.customer-card').length;
+                    leadColumn.querySelector('h3').textContent = `线索 (${leadCount})`;
+                    
+                    // 为新卡片添加点击事件
+                    newCustomerCard.addEventListener('click', function() {
+                        const sidebar = document.querySelector('.ai-sidebar');
+                        sidebar.style.display = 'block';
+                        
+                        const customerName = this.querySelector('.customer-name').textContent;
+                        const aiContent = sidebar.querySelector('.ai-content');
+                        aiContent.innerHTML = `
+                            <h4>${customerName}</h4>
+                            <p><strong>AI分析：</strong>该客户对产品表现出较高兴趣，建议重点跟进。</p>
+                            <p><strong>推荐话术：</strong>您好${customerName}，关于我们之前讨论的方案，我已经准备了详细的资料，请问您什么时候方便进一步沟通？</p>
+                            <p><strong>预期成交时间：</strong>2-3周</p>
+                        `;
+                    });
+                    
+                    // 从公海池中移除客户
+                    customerCard.remove();
+                    
+                    // 更新公海池数量
+                    const publicPoolColumn = document.querySelector('#public-pool-content .kanban-column');
+                    const publicPoolCount = publicPoolColumn.querySelectorAll('.customer-card').length;
+                    publicPoolColumn.querySelector('h3').textContent = `公海池 (${publicPoolCount})`;
+                    
                     alert('客户领取成功！');
                 }
             });
