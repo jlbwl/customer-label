@@ -2969,7 +2969,9 @@
                         closed: '已成交',
                         lost: '已流失'
                     }[status] || status;
-                    h3.textContent = `${statusText} (${customers.length})`;
+                    // 显示该状态下的客户总数
+                    const totalCount = appData.customers.filter(c => c.status === status).length;
+                    h3.textContent = `${statusText} (${totalCount})`;
                 }
                 
                 // 添加客户卡片
