@@ -621,6 +621,7 @@
             
             .customer-card {
                 padding: 16px;
+                margin-bottom: 12px;
             }
             
             .customer-actions {
@@ -631,6 +632,8 @@
             .customer-actions button {
                 width: 100%;
                 justify-content: center;
+                padding: 8px 14px;
+                font-size: 13px;
             }
             
             .batch-operations {
@@ -650,6 +653,22 @@
             .batch-operations .actions button {
                 flex: 1;
                 min-width: 120px;
+                justify-content: center;
+            }
+            
+            /* 搜索栏响应式 */
+            .search-container {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .search-container input {
+                width: 100%;
+            }
+            
+            .search-container button {
+                width: 100%;
                 justify-content: center;
             }
             
@@ -715,6 +734,21 @@
             
             .batch-operations .actions button {
                 flex: 1 1 100%;
+            }
+            
+            /* 进一步优化小屏幕显示 */
+            .kanban-column {
+                padding: 16px;
+            }
+            
+            .customer-actions button {
+                padding: 7px 12px;
+                font-size: 12px;
+            }
+            
+            .tag {
+                font-size: 11px;
+                padding: 4px 12px;
             }
         }
         
@@ -942,7 +976,7 @@
             </div>
             
             <!-- 搜索栏 -->
-            <div style="margin: 20px 0; display: flex; gap: 10px;">
+            <div class="search-container" style="margin: 20px 0; display: flex; gap: 10px;">
                 <input type="text" id="dashboard-search" placeholder="搜索客户（姓名、公司、电话、微信）" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                 <button onclick="searchDashboard()" class="primary">搜索</button>
                 <button onclick="clearDashboardSearch()" style="padding: 10px 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">重置</button>
@@ -999,7 +1033,7 @@
         
         <div id="public-pool-content" class="tab-content" style="display: none;">
             <h3>公海池市场</h3>
-            <div style="margin: 20px 0; display: flex; gap: 10px;">
+            <div class="search-container" style="margin: 20px 0; display: flex; gap: 10px;">
                 <input type="text" id="public-pool-search" placeholder="搜索客户（姓名、公司、电话、微信）" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                 <button onclick="searchPublicPool()" class="primary">搜索</button>
                 <button onclick="clearPublicPoolSearch()" style="padding: 10px 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">重置</button>
