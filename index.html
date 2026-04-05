@@ -1590,7 +1590,7 @@
                     saveData(appData);
                     
                     // 刷新界面
-                    updateDashboard();
+                    updateCustomerUI();
                     
                     alert(`客户数据导入成功！\n导入：${importedCount} 条\n已存在：${existingCount} 条`);
                     
@@ -1700,157 +1700,6 @@
                 lost: 1
             }
         };
-        
-        // 更新销售工作台界面
-        function updateDashboard() {
-            // 清空所有状态列的客户卡片
-            document.querySelectorAll('.kanban-column').forEach(column => {
-                // 保留标题，清空其他内容
-                const h3 = column.querySelector('h3');
-                if (h3) {
-                    column.innerHTML = '';
-                    column.appendChild(h3);
-                }
-            });
-            
-            // 按状态分组客户
-            const customersByStatus = {
-                lead: [],
-                following: [],
-                'high-intent': [],
-                closed: [],
-                lost: []
-            };
-            
-            appData.customers.forEach(customer => {
-                const status = customer.status || 'lead';
-                if (customersByStatus[status]) {
-                    customersByStatus[status].push(customer);
-                }
-            });
-            
-            // 为每个状态列添加客户卡片
-            Object.keys(customersByStatus).forEach(status => {
-                const column = document.querySelector(`.kanban-column[data-status="${status}"]`);
-                if (!column) return;
-                
-                const customers = customersByStatus[status];
-                const currentPage = paginationConfig.currentPage[status] || 1;
-                const itemsPerPage = paginationConfig.itemsPerPage;
-                const totalPages = Math.ceil(customers.length / itemsPerPage);
-                
-                // 计算当前页的客户数据
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                const paginatedCustomers = customers.slice(startIndex, endIndex);
-                
-                // 更新列标题中的客户数量
-                const h3 = column.querySelector('h3');
-                if (h3) {
-                    const statusText = {
-                        lead: '线索',
-                        following: '跟进',
-                        'high-intent': '高意向',
-                        closed: '已成交',
-                        lost: '已流失'
-                    }[status] || status;
-                    h3.textContent = `${statusText} (${customers.length})`;
-                }
-                
-                // 添加客户卡片
-                paginatedCustomers.forEach(customer => {
-                    const customerCard = document.createElement('div');
-                    customerCard.className = 'customer-card';
-                    customerCard.setAttribute('data-id', customer.id);
-                    
-                    customerCard.innerHTML = `
-                        <div class="customer-name">${customer.name}</div>
-                        <div class="customer-info">
-                            ${customer.company ? `公司：${customer.company}<br>` : ''}
-                            ${customer.source ? `来源：${customer.source}<br>` : ''}
-                            ${customer.wechat ? `微信：${customer.wechat}<br>` : ''}
-                            评分：${customer.ai_score || 0}
-                        </div>
-                        <div class="customer-actions">
-                            <button onclick="viewCustomer('${customer.id}')">查看</button>
-                            <button onclick="followCustomer('${customer.id}')">跟进</button>
-                            <button onclick="editCustomer('${customer.id}')">修改</button>
-                            <button onclick="discardCustomer('${customer.id}')">废弃</button>
-                        </div>
-                    `;
-                    
-                    column.appendChild(customerCard);
-                });
-                
-                // 添加分页控件
-                if (totalPages > 1) {
-                    const pagination = document.createElement('div');
-                    pagination.className = 'pagination';
-                    pagination.style.cssText = `
-                        margin-top: 20px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        gap: 8px;
-                    `;
-                    
-                    // 上一页按钮
-                    const prevButton = document.createElement('button');
-                    prevButton.textContent = '上一页';
-                    prevButton.disabled = currentPage === 1;
-                    prevButton.onclick = () => {
-                        if (currentPage > 1) {
-                            paginationConfig.currentPage[status] = currentPage - 1;
-                            updateDashboard();
-                        }
-                    };
-                    prevButton.style.cssText = `
-                        padding: 6px 12px;
-                        border: 1px solid var(--border-color);
-                        border-radius: var(--border-radius);
-                        background-color: var(--card-background);
-                        font-size: 12px;
-                        cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'};
-                        opacity: ${currentPage === 1 ? 0.5 : 1};
-                    `;
-                    pagination.appendChild(prevButton);
-                    
-                    // 页码信息
-                    const pageInfo = document.createElement('span');
-                    pageInfo.textContent = `${currentPage}/${totalPages}`;
-                    pageInfo.style.cssText = `
-                        font-size: 12px;
-                        color: var(--text-muted);
-                        min-width: 40px;
-                        text-align: center;
-                    `;
-                    pagination.appendChild(pageInfo);
-                    
-                    // 下一页按钮
-                    const nextButton = document.createElement('button');
-                    nextButton.textContent = '下一页';
-                    nextButton.disabled = currentPage === totalPages;
-                    nextButton.onclick = () => {
-                        if (currentPage < totalPages) {
-                            paginationConfig.currentPage[status] = currentPage + 1;
-                            updateDashboard();
-                        }
-                    };
-                    nextButton.style.cssText = `
-                        padding: 6px 12px;
-                        border: 1px solid var(--border-color);
-                        border-radius: var(--border-radius);
-                        background-color: var(--card-background);
-                        font-size: 12px;
-                        cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'};
-                        opacity: ${currentPage === totalPages ? 0.5 : 1};
-                    `;
-                    pagination.appendChild(nextButton);
-                    
-                    column.appendChild(pagination);
-                }
-            });
-        }
         
         // 数据备份管理
         const BackupManager = {
@@ -3065,7 +2914,15 @@
                 column.appendChild(h3);
             });
             
-            // 重新添加客户卡片
+            // 按状态分组客户
+            const customersByStatus = {
+                lead: [],
+                following: [],
+                'high-intent': [],
+                closed: [],
+                lost: []
+            };
+            
             // 过滤客户
             let filteredCustomers = appData.customers;
             if (dashboardSearchTerm) {
@@ -3081,41 +2938,139 @@
             }
             
             filteredCustomers.forEach(customer => {
-                const column = document.querySelector(`.kanban-column[data-status="${customer.status}"]`);
-                if (column) {
+                const status = customer.status || 'lead';
+                if (customersByStatus[status]) {
+                    customersByStatus[status].push(customer);
+                }
+            });
+            
+            // 为每个状态列添加客户卡片和分页控件
+            Object.keys(customersByStatus).forEach(status => {
+                const column = document.querySelector(`.kanban-column[data-status="${status}"]`);
+                if (!column) return;
+                
+                const customers = customersByStatus[status];
+                const currentPage = paginationConfig.currentPage[status] || 1;
+                const itemsPerPage = paginationConfig.itemsPerPage;
+                const totalPages = Math.ceil(customers.length / itemsPerPage);
+                
+                // 计算当前页的客户数据
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedCustomers = customers.slice(startIndex, endIndex);
+                
+                // 更新列标题中的客户数量
+                const h3 = column.querySelector('h3');
+                if (h3) {
+                    const statusText = {
+                        lead: '线索',
+                        following: '跟进',
+                        'high-intent': '高意向',
+                        closed: '已成交',
+                        lost: '已流失'
+                    }[status] || status;
+                    h3.textContent = `${statusText} (${customers.length})`;
+                }
+                
+                // 添加客户卡片
+                paginatedCustomers.forEach(customer => {
                     const customerCard = document.createElement('div');
-                customerCard.className = 'customer-card';
-                customerCard.setAttribute('data-id', customer.id);
-                customerCard.setAttribute('draggable', 'true');
-                
-                // 生成标签HTML
-                const tagsHtml = customer.tags && customer.tags.length > 0 ? 
-                    `<div class="customer-tags">
-                        ${customer.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>` : '';
-                
-                customerCard.innerHTML = `
-                    <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <input type="checkbox" class="customer-checkbox" onclick="toggleCustomerSelection('${customer.id}')" style="margin-top: 2px;">
-                        <div style="flex: 1;">
-                            <div class="customer-name">${customer.name}</div>
-                            <div class="customer-info">
-                                公司：${customer.company || '未填写'}<br>
-                                ${customer.wechat ? `微信：${customer.wechat}<br>` : ''}
-                                来源：${customer.source || '未填写'}<br>
-                                评分：${customer.ai_score || 0}
-                            </div>
-                            ${tagsHtml}
-                            <div class="customer-actions">
-                                <button onclick="viewCustomer('${customer.id}')">查看</button>
-                                <button onclick="followCustomer('${customer.id}')">跟进</button>
-                                <button onclick="editCustomer('${customer.id}')">修改</button>
-                                <button onclick="discardCustomer('${customer.id}')">废弃</button>
+                    customerCard.className = 'customer-card';
+                    customerCard.setAttribute('data-id', customer.id);
+                    customerCard.setAttribute('draggable', 'true');
+                    
+                    // 生成标签HTML
+                    const tagsHtml = customer.tags && customer.tags.length > 0 ? 
+                        `<div class="customer-tags">
+                            ${customer.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>` : '';
+                    
+                    customerCard.innerHTML = `
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="checkbox" class="customer-checkbox" onclick="toggleCustomerSelection('${customer.id}')" style="margin-top: 2px;">
+                            <div style="flex: 1;">
+                                <div class="customer-name">${customer.name}</div>
+                                <div class="customer-info">
+                                    公司：${customer.company || '未填写'}<br>
+                                    ${customer.wechat ? `微信：${customer.wechat}<br>` : ''}
+                                    来源：${customer.source || '未填写'}<br>
+                                    评分：${customer.ai_score || 0}
+                                </div>
+                                ${tagsHtml}
+                                <div class="customer-actions">
+                                    <button onclick="viewCustomer('${customer.id}')">查看</button>
+                                    <button onclick="followCustomer('${customer.id}')">跟进</button>
+                                    <button onclick="editCustomer('${customer.id}')">修改</button>
+                                    <button onclick="discardCustomer('${customer.id}')">废弃</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                    
                     column.appendChild(customerCard);
+                });
+                
+                // 添加分页控件
+                if (totalPages > 1) {
+                    const pagination = document.createElement('div');
+                    pagination.className = 'pagination';
+                    pagination.style.cssText = `
+                        margin-top: 20px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 10px;
+                    `;
+                    
+                    // 上一页按钮
+                    const prevButton = document.createElement('button');
+                    prevButton.textContent = '上一页';
+                    prevButton.style.cssText = `
+                        padding: 6px 12px;
+                        border: 1px solid var(--border-color);
+                        border-radius: var(--border-radius);
+                        background-color: var(--card-background);
+                        color: var(--text-primary);
+                        cursor: pointer;
+                    `;
+                    prevButton.disabled = currentPage === 1;
+                    prevButton.onclick = () => {
+                        if (currentPage > 1) {
+                            paginationConfig.currentPage[status] = currentPage - 1;
+                            updateCustomerUI();
+                        }
+                    };
+                    
+                    // 页码信息
+                    const pageInfo = document.createElement('span');
+                    pageInfo.textContent = `${currentPage}/${totalPages}`;
+                    pageInfo.style.cssText = `
+                        color: var(--text-primary);
+                    `;
+                    
+                    // 下一页按钮
+                    const nextButton = document.createElement('button');
+                    nextButton.textContent = '下一页';
+                    nextButton.style.cssText = `
+                        padding: 6px 12px;
+                        border: 1px solid var(--border-color);
+                        border-radius: var(--border-radius);
+                        background-color: var(--card-background);
+                        color: var(--text-primary);
+                        cursor: pointer;
+                    `;
+                    nextButton.disabled = currentPage === totalPages;
+                    nextButton.onclick = () => {
+                        if (currentPage < totalPages) {
+                            paginationConfig.currentPage[status] = currentPage + 1;
+                            updateCustomerUI();
+                        }
+                    };
+                    
+                    pagination.appendChild(prevButton);
+                    pagination.appendChild(pageInfo);
+                    pagination.appendChild(nextButton);
+                    column.appendChild(pagination);
                 }
             });
             
