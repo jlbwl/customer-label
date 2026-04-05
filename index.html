@@ -3132,13 +3132,7 @@
                 }
             }
             
-            // 更新各列数量
-            document.querySelectorAll('.kanban-column').forEach(column => {
-                const count = column.querySelectorAll('.customer-card').length;
-                const h3 = column.querySelector('h3');
-                const statusText = h3.textContent.split(' ')[0];
-                h3.textContent = `${statusText} (${count})`;
-            });
+
             
             // 重新初始化拖拽功能
             initDragAndDrop();
