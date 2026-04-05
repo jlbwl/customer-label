@@ -438,6 +438,62 @@
         
         // 添加客户按钮点击事件
         document.querySelector('button.primary').addEventListener('click', function() {
+            // 获取表单数据
+            const name = document.querySelector('input[placeholder="请输入客户姓名"]').value;
+            const phone = document.querySelector('input[placeholder="请输入客户电话"]').value;
+            const company = document.querySelector('input[placeholder="请输入公司名称"]').value;
+            const source = document.querySelector('input[placeholder="请输入客户来源"]').value;
+            
+            // 验证表单
+            if (!name || !phone || !company || !source) {
+                alert('请填写完整的客户信息！');
+                return;
+            }
+            
+            // 创建新客户卡片
+            const newCustomerCard = document.createElement('div');
+            newCustomerCard.className = 'customer-card';
+            newCustomerCard.innerHTML = `
+                <div class="customer-name">${name}</div>
+                <div class="customer-info">
+                    公司：${company}<br>
+                    来源：${source}<br>
+                    评分：80
+                </div>
+                <div class="customer-actions">
+                    <button>查看</button>
+                    <button>跟进</button>
+                </div>
+            `;
+            
+            // 添加到线索列
+            const leadColumn = document.querySelector('.kanban-column:nth-child(1)');
+            leadColumn.appendChild(newCustomerCard);
+            
+            // 更新线索数量
+            const leadCount = leadColumn.querySelectorAll('.customer-card').length;
+            leadColumn.querySelector('h3').textContent = `线索 (${leadCount})`;
+            
+            // 为新卡片添加点击事件
+            newCustomerCard.addEventListener('click', function() {
+                const sidebar = document.querySelector('.ai-sidebar');
+                sidebar.style.display = 'block';
+                
+                const customerName = this.querySelector('.customer-name').textContent;
+                const aiContent = sidebar.querySelector('.ai-content');
+                aiContent.innerHTML = `
+                    <h4>${customerName}</h4>
+                    <p><strong>AI分析：</strong>该客户对产品表现出较高兴趣，建议重点跟进。</p>
+                    <p><strong>推荐话术：</strong>您好${customerName}，关于我们之前讨论的方案，我已经准备了详细的资料，请问您什么时候方便进一步沟通？</p>
+                    <p><strong>预期成交时间：</strong>2-3周</p>
+                `;
+            });
+            
+            // 清空表单
+            document.querySelectorAll('.quick-add input').forEach(input => {
+                input.value = '';
+            });
+            
             alert('客户添加成功！');
         });
         
