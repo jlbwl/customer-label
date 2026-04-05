@@ -252,6 +252,7 @@
         <div class="tabs">
             <div class="tab active" data-tab="dashboard">销售工作台</div>
             <div class="tab" data-tab="public-pool">公海池市场</div>
+            <div class="tab" data-tab="data">数据管理</div>
         </div>
         
         <div id="dashboard-content" class="tab-content">
@@ -343,6 +344,22 @@
                 </div>
             </div>
         </div>
+        
+        <div id="data-content" class="tab-content" style="display: none;">
+            <h3>数据管理</h3>
+            <div class="quick-add">
+                <h4>本地存储数据</h4>
+                <p>客户数量：<span id="customer-count">0</span></p>
+                <p>公海池数量：<span id="public-pool-count">0</span></p>
+                <div style="margin: 20px 0;">
+                    <button onclick="exportData()" class="primary">导出数据</button>
+                    <button onclick="clearData()" style="margin-left: 10px;">清空数据</button>
+                </div>
+                <div id="data-preview" style="margin-top: 20px; padding: 15px; background-color: #f3f4f6; border-radius: 6px; max-height: 300px; overflow-y: auto;">
+                    <pre id="data-text">加载中...</pre>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="ai-sidebar" style="display: none;">
@@ -353,52 +370,74 @@
     </div>
     
     <script>
-        // 模拟数据
-        const mockCustomers = [
-            {
-                id: '1',
-                name: '张三',
-                phone: '13800138000',
-                company: 'ABC公司',
-                source: '官网',
-                status: 'lead',
-                owner_id: 'user1',
-                ai_score: 75,
-                last_contact_at: new Date().toISOString(),
-                notes: '对产品感兴趣',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                is_public: false
-            },
-            {
-                id: '2',
-                name: '李四',
-                phone: '13900139000',
-                company: 'XYZ公司',
-                source: '展会',
-                status: 'following',
-                owner_id: 'user1',
-                ai_score: 85,
-                last_contact_at: new Date().toISOString(),
-                notes: '正在评估方案',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                is_public: false
-            }
-        ];
+        // 本地存储管理
+        const STORAGE_KEY = 'customer-label-data';
         
-        const mockPublicPool = [
-            {
-                id: '3',
-                name: '王五',
-                phone: '13700137000',
-                company: 'DEF公司',
-                source: '推荐',
-                ai_score: 90,
-                last_contact_at: new Date().toISOString(),
-                created_at: new Date().toISOString()
+        // 加载数据
+        function loadData() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                return JSON.parse(savedData);
             }
-        ];
+            return {
+                customers: [
+                    {
+                        id: '1',
+                        name: '张三',
+                        phone: '13800138000',
+                        company: 'ABC公司',
+                        source: '官网',
+                        status: 'lead',
+                        owner_id: 'user1',
+                        ai_score: 75,
+                        last_contact_at: new Date().toISOString(),
+                        notes: '对产品感兴趣',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        is_public: false
+                    },
+                    {
+                        id: '2',
+                        name: '李四',
+                        phone: '13900139000',
+                        company: 'XYZ公司',
+                        source: '展会',
+                        status: 'following',
+                        owner_id: 'user1',
+                        ai_score: 85,
+                        last_contact_at: new Date().toISOString(),
+                        notes: '正在评估方案',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        is_public: false
+                    }
+                ],
+                publicPool: [
+                    {
+                        id: '3',
+                        name: '王五',
+                        phone: '13700137000',
+                        company: 'DEF公司',
+                        source: '推荐',
+                        ai_score: 90,
+                        last_contact_at: new Date().toISOString(),
+                        created_at: new Date().toISOString()
+                    }
+                ]
+            };
+        }
+        
+        // 保存数据
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        
+        // 初始化数据
+        let appData = loadData();
+        
+        // 模拟数据（使用本地存储的数据）
+        const mockCustomers = appData.customers;
+        const mockPublicPool = appData.publicPool;
         
         // 标签页切换
         document.querySelectorAll('.tab').forEach(tab => {
@@ -494,7 +533,26 @@
                 input.value = '';
             });
             
+            // 更新本地存储
+            appData.customers.push({
+                id: Date.now().toString(),
+                name: name,
+                phone: phone,
+                company: company,
+                source: source,
+                status: 'lead',
+                owner_id: 'user1',
+                ai_score: 80,
+                last_contact_at: new Date().toISOString(),
+                notes: '',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                is_public: false
+            });
+            saveData(appData);
+            
             alert('客户添加成功！');
+            
         });
         
         // 领取客户按钮点击事件
@@ -549,10 +607,83 @@
                     const publicPoolCount = publicPoolColumn.querySelectorAll('.customer-card').length;
                     publicPoolColumn.querySelector('h3').textContent = `公海池 (${publicPoolCount})`;
                     
+                    // 从公海池数据中移除
+                    const publicPoolIndex = appData.publicPool.findIndex(p => p.name === customerName);
+                    if (publicPoolIndex !== -1) {
+                        const customer = appData.publicPool[publicPoolIndex];
+                        appData.publicPool.splice(publicPoolIndex, 1);
+                        
+                        // 添加到客户列表
+                        appData.customers.push({
+                            id: Date.now().toString(),
+                            name: customer.name,
+                            phone: customer.phone || '',
+                            company: customer.company || '',
+                            source: customer.source || '',
+                            status: 'lead',
+                            owner_id: 'user1',
+                            ai_score: customer.ai_score || 80,
+                            last_contact_at: new Date().toISOString(),
+                            notes: '',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            is_public: false
+                        });
+                        
+                        // 保存到本地存储
+                        saveData(appData);
+                        
+                        // 更新数据管理页面
+                        updateDataPage();
+                    }
+                    
                     alert('客户领取成功！');
+                    
                 }
             });
         });
+        
+        // 数据管理功能
+        function updateDataPage() {
+            if (document.getElementById('customer-count')) {
+                document.getElementById('customer-count').textContent = appData.customers.length;
+                document.getElementById('public-pool-count').textContent = appData.publicPool.length;
+                document.getElementById('data-text').textContent = JSON.stringify(appData, null, 2);
+            }
+        }
+        
+        function exportData() {
+            const dataStr = JSON.stringify(appData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'customer-label-data.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function clearData() {
+            if (confirm('确定要清空所有数据吗？此操作不可恢复！')) {
+                localStorage.removeItem(STORAGE_KEY);
+                appData = loadData();
+                updateDataPage();
+                alert('数据已清空！');
+            }
+        }
+        
+        // 标签页切换时更新数据管理页面
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                if (tabId === 'data') {
+                    updateDataPage();
+                }
+            });
+        });
+        
+        // 初始化数据管理页面
+        updateDataPage();
     </script>
 </body>
 </html>
