@@ -1689,6 +1689,81 @@
             return result;
         }
         
+        // 更新销售工作台界面
+        function updateDashboard() {
+            // 清空所有状态列的客户卡片
+            document.querySelectorAll('.kanban-column').forEach(column => {
+                // 保留标题，清空其他内容
+                const h3 = column.querySelector('h3');
+                if (h3) {
+                    column.innerHTML = '';
+                    column.appendChild(h3);
+                }
+            });
+            
+            // 按状态分组客户
+            const customersByStatus = {
+                lead: [],
+                following: [],
+                'high-intent': [],
+                closed: [],
+                lost: []
+            };
+            
+            appData.customers.forEach(customer => {
+                const status = customer.status || 'lead';
+                if (customersByStatus[status]) {
+                    customersByStatus[status].push(customer);
+                }
+            });
+            
+            // 为每个状态列添加客户卡片
+            Object.keys(customersByStatus).forEach(status => {
+                const column = document.querySelector(`.kanban-column[data-status="${status}"]`);
+                if (!column) return;
+                
+                const customers = customersByStatus[status];
+                
+                // 更新列标题中的客户数量
+                const h3 = column.querySelector('h3');
+                if (h3) {
+                    const statusText = {
+                        lead: '线索',
+                        following: '跟进',
+                        'high-intent': '高意向',
+                        closed: '已成交',
+                        lost: '已流失'
+                    }[status] || status;
+                    h3.textContent = `${statusText} (${customers.length})`;
+                }
+                
+                // 添加客户卡片
+                customers.forEach(customer => {
+                    const customerCard = document.createElement('div');
+                    customerCard.className = 'customer-card';
+                    customerCard.setAttribute('data-id', customer.id);
+                    
+                    customerCard.innerHTML = `
+                        <div class="customer-name">${customer.name}</div>
+                        <div class="customer-info">
+                            ${customer.company ? `公司：${customer.company}<br>` : ''}
+                            ${customer.source ? `来源：${customer.source}<br>` : ''}
+                            ${customer.wechat ? `微信：${customer.wechat}<br>` : ''}
+                            评分：${customer.ai_score || 0}
+                        </div>
+                        <div class="customer-actions">
+                            <button onclick="viewCustomer('${customer.id}')">查看</button>
+                            <button onclick="followCustomer('${customer.id}')">跟进</button>
+                            <button onclick="editCustomer('${customer.id}')">修改</button>
+                            <button onclick="discardCustomer('${customer.id}')">废弃</button>
+                        </div>
+                    `;
+                    
+                    column.appendChild(customerCard);
+                });
+            });
+        }
+        
         // 数据备份管理
         const BackupManager = {
             downloadBackup() {
