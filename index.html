@@ -1273,7 +1273,7 @@
                     <button onclick="openCreateWorkflowModal()" class="primary">创建工作流</button>
                 </div>
                 
-                <div id="workflow-list" class="virtual-scroll-container" style="margin: 20px 0; padding: 15px; background-color: #f3f4f6; border-radius: 6px;">
+                <div id="workflow-list" style="margin: 20px 0;">
                     <p>加载中...</p>
                 </div>
             </div>
@@ -5001,23 +5001,38 @@
             const workflowList = document.getElementById('workflow-list');
             
             if (workflows.length === 0) {
-                workflowList.innerHTML = '<p>暂无工作流，请创建新工作流。</p>';
+                workflowList.innerHTML = '<div style="text-align: center; padding: 40px; background-color: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px;"><p style="margin: 0; color: #6b7280;">暂无工作流，请创建新工作流。</p></div>';
                 return;
             }
             
-            workflowList.innerHTML = workflows.map(workflow => `
-                <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
-                    <h4>${workflow.name}</h4>
-                    <p style="margin: 5px 0; font-size: 14px;">类型：${getWorkflowTypeText(workflow.type)}</p>
-                    <p style="margin: 5px 0; font-size: 14px;">步骤数：${workflow.steps.length}</p>
-                    <p style="margin: 5px 0; font-size: 14px;">更新时间：${new Date(workflow.updated_at).toLocaleString()}</p>
-                    <div style="margin-top: 10px; display: flex; gap: 10px;">
-                        <button onclick="openWorkflowDetailModal('${workflow.id}')" style="padding: 6px 12px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">查看</button>
-                        <button onclick="editWorkflow('${workflow.id}')" style="padding: 6px 12px; background-color: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">编辑</button>
-                        <button onclick="deleteWorkflow('${workflow.id}')" style="padding: 6px 12px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">删除</button>
-                    </div>
+            workflowList.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                    ${workflows.map(workflow => `
+                        <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); transition: box-shadow 0.2s ease;">
+                            <h4 style="margin-top: 0; margin-bottom: 15px; color: #1f2937; font-size: 16px;">${workflow.name}</h4>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                                    <span style="color: #6b7280;">类型：</span>
+                                    <span style="font-weight: 500; color: #374151;">${getWorkflowTypeText(workflow.type)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                                    <span style="color: #6b7280;">步骤数：</span>
+                                    <span style="font-weight: 500; color: #374151;">${workflow.steps.length}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                    <span style="color: #6b7280;">更新时间：</span>
+                                    <span style="font-weight: 500; color: #374151;">${new Date(workflow.updated_at).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 20px; display: flex; gap: 8px;">
+                                <button onclick="openWorkflowDetailModal('${workflow.id}')" style="flex: 1; padding: 8px 12px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">查看</button>
+                                <button onclick="editWorkflow('${workflow.id}')" style="flex: 1; padding: 8px 12px; background-color: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">编辑</button>
+                                <button onclick="deleteWorkflow('${workflow.id}')" style="padding: 8px 12px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">删除</button>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
+            `;
         }
         
         // 获取工作流类型文本
@@ -5531,7 +5546,7 @@
     
     <!-- 版本信息 -->
     <div style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--border-color); font-size: 14px; color: var(--text-muted);">
-        <p>智能客户池转化工具 v1.0.60</p>
+        <p>智能客户池转化工具 v1.0.61</p>
         <p style="margin-top: 5px;">© 2026 金卢比智能表单</p>
     </div>
 </body>
