@@ -1554,6 +1554,7 @@
                     // 导入客户数据
                     let importedCount = 0;
                     let existingCount = 0;
+                    let duplicateCompanyCount = 0;
                     
                     customers.forEach(customerData => {
                         // 检查客户是否已存在（通过电话号）
@@ -1561,6 +1562,18 @@
                         if (existingCustomer) {
                             existingCount++;
                             return;
+                        }
+                        
+                        // 检查公司名称是否已存在
+                        if (customerData.company && customerData.company.trim()) {
+                            const trimmedCompany = customerData.company.trim();
+                            const existingInCustomers = appData.customers.find(c => c.company && c.company.trim() === trimmedCompany);
+                            const existingInPublicPool = appData.publicPool.find(c => c.company && c.company.trim() === trimmedCompany);
+                            
+                            if (existingInCustomers || existingInPublicPool) {
+                                duplicateCompanyCount++;
+                                return;
+                            }
                         }
                         
                         // 创建新客户
@@ -1592,7 +1605,11 @@
                     // 刷新界面
                     updateCustomerUI();
                     
-                    alert(`客户数据导入成功！\n导入：${importedCount} 条\n已存在：${existingCount} 条`);
+                    let message = `客户数据导入成功！\n导入：${importedCount} 条\n已存在（电话重复）：${existingCount} 条`;
+                    if (duplicateCompanyCount > 0) {
+                        message += `\n公司名称重复：${duplicateCompanyCount} 条`;
+                    }
+                    alert(message);
                     
                     // 清空文件输入
                     input.value = '';
@@ -4765,6 +4782,18 @@
             if (!name) {
                 alert('请输入客户姓名');
                 return;
+            }
+            
+            // 检查公司名称是否已存在
+            if (company && company.trim()) {
+                const trimmedCompany = company.trim();
+                const existingInCustomers = appData.customers.find(c => c.company && c.company.trim() === trimmedCompany);
+                const existingInPublicPool = appData.publicPool.find(c => c.company && c.company.trim() === trimmedCompany);
+                
+                if (existingInCustomers || existingInPublicPool) {
+                    alert(`公司名称"${trimmedCompany}"已存在，不允许重复录入！`);
+                    return;
+                }
             }
             
             const newCustomer = {
