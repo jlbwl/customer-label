@@ -3519,27 +3519,27 @@
                 z-index: 1000;
             `;
             modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>黑名单设置</h3>
-                        <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                <div class="modal-content" style="background-color: var(--card-background); border-radius: var(--border-radius); box-shadow: var(--shadow-lg); padding: 24px; width: 90%; max-width: 500px;">
+                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: var(--text-primary);">黑名单设置</h3>
+                        <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()" style="cursor: pointer; font-size: 24px; color: var(--text-muted);">&times;</span>
                     </div>
                     <div class="modal-body">
                         <div style="margin-bottom: 20px;">
-                            <input type="text" id="blacklist-phone" placeholder="输入手机号" style="width: 200px; padding: 8px; margin-right: 10px;">
+                            <input type="text" id="blacklist-phone" placeholder="输入手机号" style="width: 200px; padding: 8px; margin-right: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                             <button onclick="addBlacklistPhone()" class="primary">添加</button>
                         </div>
-                        <h4>黑名单手机号列表：</h4>
-                        <ul id="blacklist-list" style="list-style: none; padding: 0; max-height: 200px; overflow-y: auto;">
+                        <h4 style="margin-bottom: 12px; color: var(--text-secondary);">黑名单手机号列表：</h4>
+                        <ul id="blacklist-list" style="list-style: none; padding: 0; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background);">
                             ${appData.blacklist.map(phone => `
-                                <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">
+                                <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary);">
                                     <span>${phone}</span>
-                                    <button onclick="removeBlacklistPhone('${phone}')" style="background-color: #ff4d4f; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">删除</button>
+                                    <button onclick="removeBlacklistPhone('${phone}')" style="background-color: var(--danger-color); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">删除</button>
                                 </li>
                             `).join('')}
                         </ul>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="margin-top: 20px; text-align: right;">
                         <button onclick="this.parentElement.parentElement.parentElement.remove()" class="secondary">关闭</button>
                     </div>
                 </div>
