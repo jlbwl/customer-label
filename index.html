@@ -2363,9 +2363,7 @@
         
         // 编辑客户信息
         function editCustomer(customerId) {
-            // 确保customerId是字符串类型，避免数字精度问题
-            const customerIdStr = String(customerId);
-            const customer = appData.customers.find(c => c.id === customerIdStr);
+            const customer = appData.customers.find(c => c.id === customerId);
             if (!customer) return;
             
             // 创建模态框
@@ -2384,35 +2382,32 @@
                 z-index: 1000;
             `;
             
-            // 生成唯一的ID后缀
-            const uniqueId = customer.id.replace(/[^a-zA-Z0-9]/g, '');
-            
             modal.innerHTML = `
                 <div style="background-color: var(--card-background); padding: 24px; border-radius: var(--border-radius); width: 90%; max-width: 500px; box-shadow: var(--shadow-lg);">
                     <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--text-primary);">修改客户信息</h3>
                     <div class="form-group">
                         <label>姓名</label>
-                        <input type="text" id="edit-name-${uniqueId}" value="${customer.name}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
+                        <input type="text" id="edit-name" value="${customer.name}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                     </div>
                     <div class="form-group">
                         <label>电话</label>
-                        <input type="text" id="edit-phone-${uniqueId}" value="${customer.phone || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
+                        <input type="text" id="edit-phone" value="${customer.phone || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                     </div>
                     <div class="form-group">
                         <label>微信</label>
-                        <input type="text" id="edit-wechat-${uniqueId}" value="${customer.wechat || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
+                        <input type="text" id="edit-wechat" value="${customer.wechat || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                     </div>
                     <div class="form-group">
                         <label>公司</label>
-                        <input type="text" id="edit-company-${uniqueId}" value="${customer.company || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
+                        <input type="text" id="edit-company" value="${customer.company || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                     </div>
                     <div class="form-group">
                         <label>来源</label>
-                        <input type="text" id="edit-source-${uniqueId}" value="${customer.source || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
+                        <input type="text" id="edit-source" value="${customer.source || ''}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                     </div>
                     <div class="form-group">
                         <label>状态</label>
-                        <select id="edit-status-${uniqueId}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
+                        <select id="edit-status" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary);">
                             <option value="lead" ${customer.status === 'lead' ? 'selected' : ''}>线索</option>
                             <option value="following" ${customer.status === 'following' ? 'selected' : ''}>跟进中</option>
                             <option value="high-intent" ${customer.status === 'high-intent' ? 'selected' : ''}>高意向</option>
@@ -2422,7 +2417,7 @@
                     </div>
                     <div class="form-group">
                         <label>备注</label>
-                        <textarea id="edit-notes-${uniqueId}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary); height: 100px;">${customer.notes || ''}</textarea>
+                        <textarea id="edit-notes" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--card-background); color: var(--text-primary); height: 100px;">${customer.notes || ''}</textarea>
                     </div>
                     <div style="text-align: right; margin-top: 20px;">
                         <button onclick="this.closest('.modal').remove()" style="margin-right: 10px;">取消</button>
@@ -2431,26 +2426,26 @@
                     </div>
                     <script>
                         // 存储原始客户数据用于检测改动
-                        const originalCustomerData_${uniqueId} = {
-                            name: document.getElementById('edit-name-${uniqueId}').value,
-                            phone: document.getElementById('edit-phone-${uniqueId}').value,
-                            wechat: document.getElementById('edit-wechat-${uniqueId}').value,
-                            company: document.getElementById('edit-company-${uniqueId}').value,
-                            source: document.getElementById('edit-source-${uniqueId}').value,
-                            status: document.getElementById('edit-status-${uniqueId}').value,
-                            notes: document.getElementById('edit-notes-${uniqueId}').value
+                        const originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')} = {
+                            name: document.getElementById('edit-name').value,
+                            phone: document.getElementById('edit-phone').value,
+                            wechat: document.getElementById('edit-wechat').value,
+                            company: document.getElementById('edit-company').value,
+                            source: document.getElementById('edit-source').value,
+                            status: document.getElementById('edit-status').value,
+                            notes: document.getElementById('edit-notes').value
                         };
                         
                         // 检测数据是否有改动
-                        function hasChanges_${uniqueId}() {
+                        function hasChanges_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}() {
                             return (
-                                document.getElementById('edit-name-${uniqueId}').value !== originalCustomerData_${uniqueId}.name ||
-                                document.getElementById('edit-phone-${uniqueId}').value !== originalCustomerData_${uniqueId}.phone ||
-                                document.getElementById('edit-wechat-${uniqueId}').value !== originalCustomerData_${uniqueId}.wechat ||
-                                document.getElementById('edit-company-${uniqueId}').value !== originalCustomerData_${uniqueId}.company ||
-                                document.getElementById('edit-source-${uniqueId}').value !== originalCustomerData_${uniqueId}.source ||
-                                document.getElementById('edit-status-${uniqueId}').value !== originalCustomerData_${uniqueId}.status ||
-                                document.getElementById('edit-notes-${uniqueId}').value !== originalCustomerData_${uniqueId}.notes
+                                document.getElementById('edit-name').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.name ||
+                                document.getElementById('edit-phone').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.phone ||
+                                document.getElementById('edit-wechat').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.wechat ||
+                                document.getElementById('edit-company').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.company ||
+                                document.getElementById('edit-source').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.source ||
+                                document.getElementById('edit-status').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.status ||
+                                document.getElementById('edit-notes').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.notes
                             );
                         }
                     <\/script>
@@ -2462,22 +2457,17 @@
         
         // 保存客户编辑
         function saveCustomerEdit(customerId) {
-            // 确保customerId是字符串类型，避免数字精度问题
-            const customerIdStr = String(customerId);
-            const customer = appData.customers.find(c => c.id === customerIdStr);
+            const customer = appData.customers.find(c => c.id === customerId);
             if (!customer) return;
             
-            // 生成唯一的ID后缀
-            const uniqueId = customerIdStr.replace(/[^a-zA-Z0-9]/g, '');
-            
             // 获取表单数据
-            customer.name = document.getElementById(`edit-name-${uniqueId}`).value;
-            customer.phone = document.getElementById(`edit-phone-${uniqueId}`).value;
-            customer.wechat = document.getElementById(`edit-wechat-${uniqueId}`).value;
-            customer.company = document.getElementById(`edit-company-${uniqueId}`).value;
-            customer.source = document.getElementById(`edit-source-${uniqueId}`).value;
-            customer.status = document.getElementById(`edit-status-${uniqueId}`).value;
-            customer.notes = document.getElementById(`edit-notes-${uniqueId}`).value;
+            customer.name = document.getElementById('edit-name').value;
+            customer.phone = document.getElementById('edit-phone').value;
+            customer.wechat = document.getElementById('edit-wechat').value;
+            customer.company = document.getElementById('edit-company').value;
+            customer.source = document.getElementById('edit-source').value;
+            customer.status = document.getElementById('edit-status').value;
+            customer.notes = document.getElementById('edit-notes').value;
             customer.updated_at = new Date().toISOString();
             
             // 保存到本地存储
@@ -2496,23 +2486,18 @@
         
         // 废弃客户编辑
         function discardCustomerEdit(customerId) {
-            // 确保customerId是字符串类型，避免数字精度问题
-            const customerIdStr = String(customerId);
-            
             // 先保存修改的内容
-            saveCustomerEdit(customerIdStr);
+            saveCustomerEdit(customerId);
             
             // 调用废弃客户函数
-            discardCustomer(customerIdStr);
+            discardCustomer(customerId);
         }
         
         // 废弃客户（移至公海池）
         function discardCustomer(customerId) {
             if (!confirm('确定要将此客户废弃并移至公海池吗？')) return;
             
-            // 确保customerId是字符串类型，避免数字精度问题
-            const customerIdStr = String(customerId);
-            const customerIndex = appData.customers.findIndex(c => c.id === customerIdStr);
+            const customerIndex = appData.customers.findIndex(c => c.id === customerId);
             if (customerIndex === -1) return;
             
             // 获取客户信息
@@ -3100,7 +3085,7 @@
                     
                     customerCard.innerHTML = `
                         <div style="display: flex; align-items: flex-start; gap: 10px;">
-                            <input type="checkbox" class="customer-checkbox" onclick="toggleCustomerSelection(\"${customer.id}\")" style="margin-top: 2px;">
+                            <input type="checkbox" class="customer-checkbox" onclick="toggleCustomerSelection('${customer.id}')" style="margin-top: 2px;">
                             <div style="flex: 1;">
                                 <div class="customer-name">${customer.name}</div>
                                 <div class="customer-info">
@@ -3111,10 +3096,10 @@
                                 </div>
                                 ${tagsHtml}
                                 <div class="customer-actions">
-                                    <button onclick="viewCustomer(\"${customer.id}\")">查看</button>
-                                    <button onclick="followCustomer(\"${customer.id}\")">跟进</button>
-                                    <button onclick="editCustomer(\"${customer.id}\")">修改</button>
-                                    <button onclick="discardCustomer(\"${customer.id}\")">废弃</button>
+                                    <button onclick="viewCustomer('${customer.id}')">查看</button>
+                                    <button onclick="followCustomer('${customer.id}')">跟进</button>
+                                    <button onclick="editCustomer('${customer.id}')">修改</button>
+                                    <button onclick="discardCustomer('${customer.id}')">废弃</button>
                                 </div>
                             </div>
                         </div>
@@ -5157,7 +5142,7 @@
     
     <!-- 版本信息 -->
     <div style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--border-color); font-size: 14px; color: var(--text-muted);">
-        <p>智能客户池转化工具 v1.0.50</p>
+        <p>智能客户池转化工具 v1.0.51</p>
         <p style="margin-top: 5px;">© 2026 金卢比智能表单</p>
     </div>
 </body>
