@@ -4541,6 +4541,7 @@
         
         // 工作流管理
         const WORKFLOW_KEY = 'customer-label-workflows';
+        const WORKFLOW_INSTANCE_KEY = 'customer-label-workflow-instances';
         
         // 加载工作流数据
         function loadWorkflows() {
@@ -4559,6 +4560,25 @@
         function saveWorkflows(workflows) {
             const encryptedWorkflows = encrypt(workflows);
             localStorage.setItem(WORKFLOW_KEY, encryptedWorkflows);
+        }
+        
+        // 加载工作流实例数据
+        function loadWorkflowInstances() {
+            const savedInstances = localStorage.getItem(WORKFLOW_INSTANCE_KEY);
+            if (savedInstances) {
+                try {
+                    return decrypt(savedInstances);
+                } catch (error) {
+                    return [];
+                }
+            }
+            return [];
+        }
+        
+        // 保存工作流实例数据
+        function saveWorkflowInstances(instances) {
+            const encryptedInstances = encrypt(instances);
+            localStorage.setItem(WORKFLOW_INSTANCE_KEY, encryptedInstances);
         }
         
         // 打开创建工作流模态框
@@ -4684,11 +4704,224 @@
                         </li>
                     `).join('')}
                 </ul>
+                <h4>关联客户</h4>
+                <div id="workflow-customers" style="margin-top: 10px;">
+                    <button onclick="openAssignCustomerModal('${workflow.id}')" style="padding: 6px 12px; background-color: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">分配客户</button>
+                    <div id="assigned-customers-list" style="margin-top: 10px;"></div>
+                </div>
             `;
             
             // 存储当前工作流ID
             document.getElementById('workflow-detail-modal').dataset.workflowId = workflowId;
             document.getElementById('workflow-detail-modal').style.display = 'block';
+            
+            // 加载已分配的客户
+            loadAssignedCustomers(workflowId);
+        }
+        
+        // 加载已分配的客户
+        function loadAssignedCustomers(workflowId) {
+            const instances = loadWorkflowInstances();
+            const workflowInstances = instances.filter(i => i.workflow_id === workflowId);
+            
+            const assignedCustomersList = document.getElementById('assigned-customers-list');
+            
+            if (workflowInstances.length === 0) {
+                assignedCustomersList.innerHTML = '<p>暂无分配的客户</p>';
+                return;
+            }
+            
+            const customerIds = workflowInstances.map(i => i.customer_id);
+            const customers = appData.customers.filter(c => customerIds.includes(c.id));
+            
+            assignedCustomersList.innerHTML = `
+                <ul style="list-style: none; padding: 0;">
+                    ${customers.map(customer => {
+                        const instance = workflowInstances.find(i => i.customer_id === customer.id);
+                        return `
+                            <li style="margin: 10px 0; padding: 10px; background-color: #f3f4f6; border-radius: 4px;">
+                                <strong>${customer.name}</strong> (${customer.phone})
+                                <p style="margin: 5px 0; font-size: 14px;">当前步骤：${instance.current_step + 1}. ${instance.step_name}</p>
+                                <p style="margin: 5px 0; font-size: 14px;">状态：${instance.status === 'active' ? '进行中' : '已完成'}</p>
+                                <button onclick="viewWorkflowInstance('${instance.id}')" style="margin-top: 5px; padding: 4px 8px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">查看详情</button>
+                            </li>
+                        `;
+                    }).join('')}
+                </ul>
+            `;
+        }
+        
+        // 打开分配客户模态框
+        function openAssignCustomerModal(workflowId) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            const customers = appData.customers;
+            
+            modal.innerHTML = `
+                <div style="background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px;">
+                    <h3>分配客户到工作流</h3>
+                    <div style="max-height: 400px; overflow-y: auto; margin: 20px 0;">
+                        ${customers.map(customer => `
+                            <div style="display: flex; align-items: center; margin-bottom: 10px; padding: 10px; background-color: #f3f4f6; border-radius: 4px;">
+                                <input type="checkbox" id="customer-${customer.id}" value="${customer.id}" style="margin-right: 10px;">
+                                <label for="customer-${customer.id}" style="flex: 1;">
+                                    <strong>${customer.name}</strong> (${customer.phone})
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="text-align: right;">
+                        <button onclick="this.closest('.modal').remove()" style="margin-right: 10px;">取消</button>
+                        <button onclick="assignCustomersToWorkflow('${workflowId}')" class="primary">分配</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // 分配客户到工作流
+        function assignCustomersToWorkflow(workflowId) {
+            const selectedCustomers = [];
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedCustomers.push(checkbox.value);
+            });
+            
+            if (selectedCustomers.length === 0) {
+                alert('请选择至少一个客户！');
+                return;
+            }
+            
+            const workflow = loadWorkflows().find(w => w.id === workflowId);
+            if (!workflow) return;
+            
+            const instances = loadWorkflowInstances();
+            
+            selectedCustomers.forEach(customerId => {
+                // 检查是否已经分配
+                const existingInstance = instances.find(i => i.workflow_id === workflowId && i.customer_id === customerId);
+                if (!existingInstance) {
+                    instances.push({
+                        id: Date.now().toString(),
+                        workflow_id: workflowId,
+                        customer_id: customerId,
+                        current_step: 0,
+                        step_name: workflow.steps[0].name,
+                        status: 'active',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+                }
+            });
+            
+            saveWorkflowInstances(instances);
+            
+            // 关闭模态框
+            const modals = document.querySelectorAll('.modal');
+            if (modals.length > 0) {
+                modals[modals.length - 1].remove();
+            }
+            
+            // 更新工作流详情
+            loadAssignedCustomers(workflowId);
+            alert('客户分配成功！');
+        }
+        
+        // 查看工作流实例
+        function viewWorkflowInstance(instanceId) {
+            const instance = loadWorkflowInstances().find(i => i.id === instanceId);
+            if (!instance) return;
+            
+            const workflow = loadWorkflows().find(w => w.id === instance.workflow_id);
+            const customer = appData.customers.find(c => c.id === instance.customer_id);
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px;">
+                    <h3>工作流实例详情</h3>
+                    <p><strong>工作流：</strong>${workflow.name}</p>
+                    <p><strong>客户：</strong>${customer.name} (${customer.phone})</p>
+                    <p><strong>当前步骤：</strong>${instance.current_step + 1}. ${instance.step_name}</p>
+                    <p><strong>状态：</strong>${instance.status === 'active' ? '进行中' : '已完成'}</p>
+                    <p><strong>创建时间：</strong>${new Date(instance.created_at).toLocaleString()}</p>
+                    <p><strong>更新时间：</strong>${new Date(instance.updated_at).toLocaleString()}</p>
+                    <h4>工作流步骤</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        ${workflow.steps.map((step, index) => `
+                            <li style="margin: 10px 0; padding: 10px; background-color: ${index <= instance.current_step ? '#d1fae5' : '#f3f4f6'}; border-radius: 4px;">
+                                <strong>${index + 1}. ${step.name}</strong> (${getStepTypeText(step.type)})
+                                ${index === instance.current_step && instance.status === 'active' ? `
+                                    <button onclick="completeWorkflowStep('${instance.id}')" style="margin-top: 10px; padding: 6px 12px; background-color: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">完成此步骤</button>
+                                ` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button onclick="this.closest('.modal').remove()" class="primary">关闭</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // 完成工作流步骤
+        function completeWorkflowStep(instanceId) {
+            const instances = loadWorkflowInstances();
+            const instanceIndex = instances.findIndex(i => i.id === instanceId);
+            if (instanceIndex === -1) return;
+            
+            const instance = instances[instanceIndex];
+            const workflow = loadWorkflows().find(w => w.id === instance.workflow_id);
+            
+            if (instance.current_step < workflow.steps.length - 1) {
+                // 进入下一步
+                instance.current_step += 1;
+                instance.step_name = workflow.steps[instance.current_step].name;
+                instance.updated_at = new Date().toISOString();
+            } else {
+                // 工作流完成
+                instance.status = 'completed';
+                instance.updated_at = new Date().toISOString();
+            }
+            
+            instances[instanceIndex] = instance;
+            saveWorkflowInstances(instances);
+            
+            // 关闭模态框
+            const modals = document.querySelectorAll('.modal');
+            if (modals.length > 0) {
+                modals[modals.length - 1].remove();
+            }
+            
+            alert('步骤完成！');
         }
         
         // 关闭工作流详情模态框
@@ -4751,6 +4984,12 @@
                 const workflows = loadWorkflows();
                 const filteredWorkflows = workflows.filter(w => w.id !== workflowId);
                 saveWorkflows(filteredWorkflows);
+                
+                // 删除相关的工作流实例
+                const instances = loadWorkflowInstances();
+                const filteredInstances = instances.filter(i => i.workflow_id !== workflowId);
+                saveWorkflowInstances(filteredInstances);
+                
                 updateWorkflowList();
                 alert('工作流删除成功！');
             }
@@ -5292,7 +5531,7 @@
     
     <!-- 版本信息 -->
     <div style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--border-color); font-size: 14px; color: var(--text-muted);">
-        <p>智能客户池转化工具 v1.0.58</p>
+        <p>智能客户池转化工具 v1.0.59</p>
         <p style="margin-top: 5px;">© 2026 金卢比智能表单</p>
     </div>
 </body>
