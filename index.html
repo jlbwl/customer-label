@@ -968,6 +968,7 @@
                 <div style="display: flex; gap: 10px;">
                     <button onclick="calculateAllCustomerScores()" class="secondary">更新客户评分</button>
                     <button onclick="batchBlacklist()">批量拉黑</button>
+                    <button onclick="openBlacklistSettings()">黑名单设置</button>
                     <button onclick="batchAction('follow')">批量跟进</button>
                     <button onclick="batchAction('high-intent')">批量高意向</button>
                     <button onclick="batchAction('close')">批量成交</button>
@@ -1849,7 +1850,8 @@
                         last_contact_at: new Date().toISOString(),
                         created_at: new Date().toISOString()
                     }
-                ]
+                ],
+                blacklist: []
             };
         }
         
@@ -3453,21 +3455,124 @@
             alert(`已对${actionCount}个客户执行操作！`);
         }
         
-        // 批量拉黑
-        function batchBlacklist() {
-            if (selectedCustomers.length === 0) {
-                alert('请先选择客户！');
+        // 打开黑名单设置
+        function openBlacklistSettings() {
+            // 确保blacklist属性存在
+            if (!appData.blacklist) {
+                appData.blacklist = [];
+            }
+            
+            // 创建黑名单设置模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>黑名单设置</h3>
+                        <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 20px;">
+                            <input type="text" id="blacklist-phone" placeholder="输入手机号" style="width: 200px; padding: 8px; margin-right: 10px;">
+                            <button onclick="addBlacklistPhone()" class="primary">添加</button>
+                        </div>
+                        <h4>黑名单手机号列表：</h4>
+                        <ul id="blacklist-list" style="list-style: none; padding: 0; max-height: 200px; overflow-y: auto;">
+                            ${appData.blacklist.map(phone => `
+                                <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">
+                                    <span>${phone}</span>
+                                    <button onclick="removeBlacklistPhone('${phone}')" style="background-color: #ff4d4f; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">删除</button>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="secondary">关闭</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // 添加手机号到黑名单
+        function addBlacklistPhone() {
+            const phoneInput = document.getElementById('blacklist-phone');
+            const phone = phoneInput.value.trim();
+            
+            if (!phone) {
+                alert('请输入手机号！');
                 return;
             }
             
-            if (!confirm(`确定要将选中的 ${selectedCustomers.length} 个客户拉黑并移至公海池吗？\n拉黑后电话号码将被替换为"财税公司电话"。`)) return;
+            // 确保blacklist属性存在
+            if (!appData.blacklist) {
+                appData.blacklist = [];
+            }
+            
+            if (appData.blacklist.includes(phone)) {
+                alert('该手机号已在黑名单中！');
+                return;
+            }
+            
+            appData.blacklist.push(phone);
+            saveData(appData);
+            
+            // 更新黑名单列表
+            updateBlacklistList();
+            
+            // 清空输入框
+            phoneInput.value = '';
+        }
+        
+        // 从黑名单中删除手机号
+        function removeBlacklistPhone(phone) {
+            // 确保blacklist属性存在
+            if (!appData.blacklist) {
+                appData.blacklist = [];
+                return;
+            }
+            
+            appData.blacklist = appData.blacklist.filter(p => p !== phone);
+            saveData(appData);
+            
+            // 更新黑名单列表
+            updateBlacklistList();
+        }
+        
+        // 更新黑名单列表
+        function updateBlacklistList() {
+            const list = document.getElementById('blacklist-list');
+            if (list) {
+                list.innerHTML = appData.blacklist.map(phone => `
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">
+                        <span>${phone}</span>
+                        <button onclick="removeBlacklistPhone('${phone}')" style="background-color: #ff4d4f; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">删除</button>
+                    </li>
+                `).join('');
+            }
+        }
+        
+        // 批量拉黑
+        function batchBlacklist() {
+            // 确保blacklist属性存在
+            if (!appData.blacklist) {
+                appData.blacklist = [];
+            }
+            
+            if (appData.blacklist.length === 0) {
+                alert('请先在黑名单设置中添加手机号！');
+                return;
+            }
+            
+            if (!confirm(`确定要将销售工作台中所有与黑名单手机号匹配的客户拉黑并移至公海池吗？\n拉黑后电话号码将被替换为"财税公司电话"。`)) return;
             
             let blacklistedCount = 0;
             
-            // 遍历选中的客户ID
+            // 遍历所有客户，查找与黑名单手机号匹配的客户
             for (let i = appData.customers.length - 1; i >= 0; i--) {
                 const customer = appData.customers[i];
-                if (selectedCustomers.includes(customer.id)) {
+                if (customer.phone && appData.blacklist.includes(customer.phone)) {
                     // 从客户列表中移除
                     appData.customers.splice(i, 1);
                     
@@ -3494,10 +3599,6 @@
             
             // 更新界面
             updateCustomerUI();
-            
-            // 清空选择
-            selectedCustomers = [];
-            updateSelectionUI();
             
             alert(`已成功拉黑 ${blacklistedCount} 个客户并移至公海池！`);
         }
