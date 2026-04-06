@@ -1380,12 +1380,12 @@
                     <div id="workflow-steps" style="margin: 10px 0;">
                         <div class="workflow-step" style="display: flex; align-items: center; margin-bottom: 10px;">
                             <input type="text" placeholder="步骤名称" style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                            <select style="margin-left: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                            <select style="margin-left: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; width: 120px;">
                                 <option value="task">任务</option>
                                 <option value="approval">审批</option>
                                 <option value="condition">条件</option>
                             </select>
-                            <button onclick="removeWorkflowStep(this)" style="margin-left: 10px; padding: 8px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">删除</button>
+                            <button onclick="removeWorkflowStep(this)" style="margin-left: 10px; padding: 8px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; width: 60px;">删除</button>
                         </div>
                     </div>
                     <button onclick="addWorkflowStep()" style="padding: 6px 12px; background-color: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">添加步骤</button>
@@ -4617,12 +4617,12 @@
             newStep.style.marginBottom = '10px';
             newStep.innerHTML = `
                 <input type="text" placeholder="步骤名称" style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                <select style="margin-left: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                <select style="margin-left: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; width: 120px;">
                     <option value="task">任务</option>
                     <option value="approval">审批</option>
                     <option value="condition">条件</option>
                 </select>
-                <button onclick="removeWorkflowStep(this)" style="margin-left: 10px; padding: 8px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">删除</button>
+                <button onclick="removeWorkflowStep(this)" style="margin-left: 10px; padding: 8px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; width: 60px;">删除</button>
             `;
             stepsContainer.appendChild(newStep);
         }
@@ -4964,12 +4964,12 @@
                 stepElement.style.marginBottom = '10px';
                 stepElement.innerHTML = `
                     <input type="text" value="${step.name}" style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                    <select style="margin-left: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                    <select style="margin-left: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; width: 120px;">
                         <option value="task" ${step.type === 'task' ? 'selected' : ''}>任务</option>
                         <option value="approval" ${step.type === 'approval' ? 'selected' : ''}>审批</option>
                         <option value="condition" ${step.type === 'condition' ? 'selected' : ''}>条件</option>
                     </select>
-                    <button onclick="removeWorkflowStep(this)" style="margin-left: 10px; padding: 8px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">删除</button>
+                    <button onclick="removeWorkflowStep(this)" style="margin-left: 10px; padding: 8px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; width: 60px;">删除</button>
                 `;
                 stepsContainer.appendChild(stepElement);
             });
@@ -5531,7 +5531,7 @@
     
     <!-- 版本信息 -->
     <div style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--border-color); font-size: 14px; color: var(--text-muted);">
-        <p>智能客户池转化工具 v1.0.59</p>
+        <p>智能客户池转化工具 v1.0.60</p>
         <p style="margin-top: 5px;">© 2026 金卢比智能表单</p>
     </div>
 </body>
