@@ -2422,7 +2422,7 @@
                     <div style="text-align: right; margin-top: 20px;">
                         <button onclick="this.closest('.modal').remove()" style="margin-right: 10px;">取消</button>
                         <button onclick="saveCustomerEdit('${customer.id}')" class="primary">保存</button>
-                        <button onclick="discardCustomerEdit('${customer.id}')" style="margin-left: 10px; background-color: #ff4d4f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">废弃</button>
+                        <button onclick="discardCustomerEdit('${customer.id}')" style="margin-left: 10px; background-color: #ff4d4f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">保存并废弃</button>
                     </div>
                     <script>
                         // 存储原始客户数据用于检测改动
@@ -2488,14 +2488,8 @@
         
         // 废弃客户编辑
         function discardCustomerEdit(customerId) {
-            // 构建检测函数名称
-            const checkFunctionName = `hasChanges_${customerId.replace(/[^a-zA-Z0-9]/g, '')}`;
-            
-            // 检查是否有数据改动
-            if (typeof window[checkFunctionName] === 'function' && window[checkFunctionName]()) {
-                alert('数据有改动，请先点击保存，然后再点击废弃！');
-                return;
-            }
+            // 先保存修改的内容
+            saveCustomerEdit(customerId);
             
             // 调用废弃客户函数
             discardCustomer(customerId);
@@ -2535,12 +2529,7 @@
             // 更新界面
             updateCustomerUI();
             
-            // 关闭模态框（如果打开）
-            const modals = document.querySelectorAll('.modal');
-            if (modals.length > 0) {
-                // 关闭最后一个打开的模态框（通常是当前的修改客户信息模态框）
-                modals[modals.length - 1].remove();
-            }
+            // 模态框已经在saveCustomerEdit函数中关闭
             
             alert('客户已成功废弃并移至公海池！');
         }
