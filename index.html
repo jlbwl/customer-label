@@ -967,6 +967,7 @@
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button onclick="calculateAllCustomerScores()" class="secondary">更新客户评分</button>
+                    <button onclick="batchBlacklist()">批量拉黑</button>
                     <button onclick="batchAction('follow')">批量跟进</button>
                     <button onclick="batchAction('high-intent')">批量高意向</button>
                     <button onclick="batchAction('close')">批量成交</button>
@@ -3064,7 +3065,6 @@
                                     <button onclick="followCustomer('${customer.id}')">跟进</button>
                                     <button onclick="editCustomer('${customer.id}')">修改</button>
                                     <button onclick="discardCustomer('${customer.id}')">废弃</button>
-                                    <button onclick="blacklistCustomer('${customer.id}')">拉黑</button>
                                 </div>
                             </div>
                         </div>
@@ -3451,6 +3451,55 @@
             selectedCustomers = [];
             updateSelectionUI();
             alert(`已对${actionCount}个客户执行操作！`);
+        }
+        
+        // 批量拉黑
+        function batchBlacklist() {
+            if (selectedCustomers.length === 0) {
+                alert('请先选择客户！');
+                return;
+            }
+            
+            if (!confirm(`确定要将选中的 ${selectedCustomers.length} 个客户拉黑并移至公海池吗？\n拉黑后电话号码将被替换为"财税公司电话"。`)) return;
+            
+            let blacklistedCount = 0;
+            
+            // 遍历选中的客户ID
+            for (let i = appData.customers.length - 1; i >= 0; i--) {
+                const customer = appData.customers[i];
+                if (selectedCustomers.includes(customer.id)) {
+                    // 从客户列表中移除
+                    appData.customers.splice(i, 1);
+                    
+                    // 简化客户信息并添加到公海池，将电话号码替换为"财税公司电话"
+                    const publicCustomer = {
+                        id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
+                        name: customer.name,
+                        phone: '财税公司电话',
+                        wechat: customer.wechat,
+                        company: customer.company,
+                        source: customer.source,
+                        ai_score: customer.ai_score,
+                        last_contact_at: customer.last_contact_at,
+                        created_at: customer.created_at
+                    };
+                    
+                    appData.publicPool.push(publicCustomer);
+                    blacklistedCount++;
+                }
+            }
+            
+            // 保存到本地存储
+            saveData(appData);
+            
+            // 更新界面
+            updateCustomerUI();
+            
+            // 清空选择
+            selectedCustomers = [];
+            updateSelectionUI();
+            
+            alert(`已成功拉黑 ${blacklistedCount} 个客户并移至公海池！`);
         }
         
         // 数据统计功能
