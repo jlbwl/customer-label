@@ -2363,7 +2363,9 @@
         
         // 编辑客户信息
         function editCustomer(customerId) {
-            const customer = appData.customers.find(c => c.id === customerId);
+            // 确保customerId是字符串类型，避免数字精度问题
+            const customerIdStr = String(customerId);
+            const customer = appData.customers.find(c => c.id === customerIdStr);
             if (!customer) return;
             
             // 创建模态框
@@ -2460,11 +2462,13 @@
         
         // 保存客户编辑
         function saveCustomerEdit(customerId) {
-            const customer = appData.customers.find(c => c.id === customerId);
+            // 确保customerId是字符串类型，避免数字精度问题
+            const customerIdStr = String(customerId);
+            const customer = appData.customers.find(c => c.id === customerIdStr);
             if (!customer) return;
             
             // 生成唯一的ID后缀
-            const uniqueId = customerId.replace(/[^a-zA-Z0-9]/g, '');
+            const uniqueId = customerIdStr.replace(/[^a-zA-Z0-9]/g, '');
             
             // 获取表单数据
             customer.name = document.getElementById(`edit-name-${uniqueId}`).value;
@@ -2492,18 +2496,23 @@
         
         // 废弃客户编辑
         function discardCustomerEdit(customerId) {
+            // 确保customerId是字符串类型，避免数字精度问题
+            const customerIdStr = String(customerId);
+            
             // 先保存修改的内容
-            saveCustomerEdit(customerId);
+            saveCustomerEdit(customerIdStr);
             
             // 调用废弃客户函数
-            discardCustomer(customerId);
+            discardCustomer(customerIdStr);
         }
         
         // 废弃客户（移至公海池）
         function discardCustomer(customerId) {
             if (!confirm('确定要将此客户废弃并移至公海池吗？')) return;
             
-            const customerIndex = appData.customers.findIndex(c => c.id === customerId);
+            // 确保customerId是字符串类型，避免数字精度问题
+            const customerIdStr = String(customerId);
+            const customerIndex = appData.customers.findIndex(c => c.id === customerIdStr);
             if (customerIndex === -1) return;
             
             // 获取客户信息
@@ -3091,7 +3100,7 @@
                     
                     customerCard.innerHTML = `
                         <div style="display: flex; align-items: flex-start; gap: 10px;">
-                            <input type="checkbox" class="customer-checkbox" onclick="toggleCustomerSelection('${customer.id}')" style="margin-top: 2px;">
+                            <input type="checkbox" class="customer-checkbox" onclick="toggleCustomerSelection(\"${customer.id}\")" style="margin-top: 2px;">
                             <div style="flex: 1;">
                                 <div class="customer-name">${customer.name}</div>
                                 <div class="customer-info">
@@ -3102,10 +3111,10 @@
                                 </div>
                                 ${tagsHtml}
                                 <div class="customer-actions">
-                                    <button onclick="viewCustomer('${customer.id}')">查看</button>
-                                    <button onclick="followCustomer('${customer.id}')">跟进</button>
-                                    <button onclick="editCustomer('${customer.id}')">修改</button>
-                                    <button onclick="discardCustomer('${customer.id}')">废弃</button>
+                                    <button onclick="viewCustomer(\"${customer.id}\")">查看</button>
+                                    <button onclick="followCustomer(\"${customer.id}\")">跟进</button>
+                                    <button onclick="editCustomer(\"${customer.id}\")">修改</button>
+                                    <button onclick="discardCustomer(\"${customer.id}\")">废弃</button>
                                 </div>
                             </div>
                         </div>
