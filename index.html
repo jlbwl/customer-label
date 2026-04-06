@@ -2496,6 +2496,49 @@
             alert('客户已成功废弃并移至公海池！');
         }
         
+        // 一键拉黑客户
+        function blacklistCustomer(customerId) {
+            if (!confirm('确定要将此客户拉黑并移至公海池吗？\n拉黑后电话号码将被替换为"财税公司电话"。')) return;
+            
+            const customerIndex = appData.customers.findIndex(c => c.id === customerId);
+            if (customerIndex === -1) return;
+            
+            // 获取客户信息
+            const customer = appData.customers[customerIndex];
+            
+            // 从客户列表中移除
+            appData.customers.splice(customerIndex, 1);
+            
+            // 简化客户信息并添加到公海池，将电话号码替换为"财税公司电话"
+            const publicCustomer = {
+                id: 'p' + Date.now(),
+                name: customer.name,
+                phone: '财税公司电话',
+                wechat: customer.wechat,
+                company: customer.company,
+                source: customer.source,
+                ai_score: customer.ai_score,
+                last_contact_at: customer.last_contact_at,
+                created_at: customer.created_at
+            };
+            
+            appData.publicPool.push(publicCustomer);
+            
+            // 保存到本地存储
+            saveData(appData);
+            
+            // 更新界面
+            updateCustomerUI();
+            
+            // 关闭模态框（如果打开）
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                modal.remove();
+            }
+            
+            alert('客户已拉黑并移至公海池！');
+        }
+        
         // 查看公海池客户详情
         function viewPublicCustomer(customerId) {
             const customer = appData.publicPool.find(c => c.id === customerId);
@@ -3021,6 +3064,7 @@
                                     <button onclick="followCustomer('${customer.id}')">跟进</button>
                                     <button onclick="editCustomer('${customer.id}')">修改</button>
                                     <button onclick="discardCustomer('${customer.id}')">废弃</button>
+                                    <button onclick="blacklistCustomer('${customer.id}')">拉黑</button>
                                 </div>
                             </div>
                         </div>
