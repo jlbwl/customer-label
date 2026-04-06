@@ -1776,27 +1776,46 @@
             },
             // 基于密码的加密函数
             encryptWithPassword(text, password) {
-                let result = '';
+                // 优化：使用数组存储结果，避免字符串拼接的性能问题
+                const result = [];
+                const passwordLength = password.length;
+                // 预计算密码字符的 charCode，避免在循环中重复计算
+                const passwordChars = [];
+                for (let j = 0; j < passwordLength; j++) {
+                    passwordChars.push(password.charCodeAt(j));
+                }
+                
                 for (let i = 0; i < text.length; i++) {
                     const charCode = text.charCodeAt(i);
-                    const passwordChar = password.charCodeAt(i % password.length);
-                    result += String.fromCharCode(charCode + passwordChar);
+                    const passwordChar = passwordChars[i % passwordLength];
+                    result.push(String.fromCharCode(charCode + passwordChar));
                 }
+                
+                const resultStr = result.join('');
                 // 修复：使用 unescape(encodeURIComponent()) 确保输入到 btoa 的是 ASCII 字符
-                return btoa(unescape(encodeURIComponent(result)));
+                return btoa(unescape(encodeURIComponent(resultStr)));
             },
             // 基于密码的解密函数
             decryptWithPassword(encrypted, password) {
                 try {
                     // 修复：使用 decodeURIComponent(escape()) 来解密
                     const text = decodeURIComponent(escape(atob(encrypted)));
-                    let result = '';
+                    // 优化：使用数组存储结果，避免字符串拼接的性能问题
+                    const result = [];
+                    const passwordLength = password.length;
+                    // 预计算密码字符的 charCode，避免在循环中重复计算
+                    const passwordChars = [];
+                    for (let j = 0; j < passwordLength; j++) {
+                        passwordChars.push(password.charCodeAt(j));
+                    }
+                    
                     for (let i = 0; i < text.length; i++) {
                         const charCode = text.charCodeAt(i);
-                        const passwordChar = password.charCodeAt(i % password.length);
-                        result += String.fromCharCode(charCode - passwordChar);
+                        const passwordChar = passwordChars[i % passwordLength];
+                        result.push(String.fromCharCode(charCode - passwordChar));
                     }
-                    return result;
+                    
+                    return result.join('');
                 } catch {
                     return null;
                 }
@@ -5144,7 +5163,7 @@
     
     <!-- 版本信息 -->
     <div style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--border-color); font-size: 14px; color: var(--text-muted);">
-        <p>智能客户池转化工具 v1.0.52</p>
+        <p>智能客户池转化工具 v1.0.53</p>
         <p style="margin-top: 5px;">© 2026 金卢比智能表单</p>
     </div>
 </body>
