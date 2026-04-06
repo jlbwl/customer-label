@@ -2478,8 +2478,12 @@
             
             alert('客户信息修改成功！');
             
-            // 关闭模态框
-            document.querySelector('.modal').remove();
+            // 关闭模态框（使用更可靠的方法，确保关闭当前的模态框）
+            const modals = document.querySelectorAll('.modal');
+            if (modals.length > 0) {
+                // 关闭最后一个打开的模态框（通常是当前的修改客户信息模态框）
+                modals[modals.length - 1].remove();
+            }
         }
         
         // 废弃客户编辑
@@ -2532,9 +2536,10 @@
             updateCustomerUI();
             
             // 关闭模态框（如果打开）
-            const modal = document.querySelector('.modal');
-            if (modal) {
-                modal.remove();
+            const modals = document.querySelectorAll('.modal');
+            if (modals.length > 0) {
+                // 关闭最后一个打开的模态框（通常是当前的修改客户信息模态框）
+                modals[modals.length - 1].remove();
             }
             
             alert('客户已成功废弃并移至公海池！');
