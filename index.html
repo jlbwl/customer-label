@@ -2422,7 +2422,33 @@
                     <div style="text-align: right; margin-top: 20px;">
                         <button onclick="this.closest('.modal').remove()" style="margin-right: 10px;">取消</button>
                         <button onclick="saveCustomerEdit('${customer.id}')" class="primary">保存</button>
+                        <button onclick="discardCustomerEdit('${customer.id}')" style="margin-left: 10px; background-color: #ff4d4f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">废弃</button>
                     </div>
+                    <script>
+                        // 存储原始客户数据用于检测改动
+                        const originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')} = {
+                            name: document.getElementById('edit-name').value,
+                            phone: document.getElementById('edit-phone').value,
+                            wechat: document.getElementById('edit-wechat').value,
+                            company: document.getElementById('edit-company').value,
+                            source: document.getElementById('edit-source').value,
+                            status: document.getElementById('edit-status').value,
+                            notes: document.getElementById('edit-notes').value
+                        };
+                        
+                        // 检测数据是否有改动
+                        function hasChanges_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}() {
+                            return (
+                                document.getElementById('edit-name').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.name ||
+                                document.getElementById('edit-phone').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.phone ||
+                                document.getElementById('edit-wechat').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.wechat ||
+                                document.getElementById('edit-company').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.company ||
+                                document.getElementById('edit-source').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.source ||
+                                document.getElementById('edit-status').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.status ||
+                                document.getElementById('edit-notes').value !== originalCustomerData_${customer.id.replace(/[^a-zA-Z0-9]/g, '')}.notes
+                            );
+                        }
+                    </script>
                 </div>
             `;
             
@@ -2454,6 +2480,21 @@
             document.querySelector('.modal').remove();
             
             alert('客户信息修改成功！');
+        }
+        
+        // 废弃客户编辑
+        function discardCustomerEdit(customerId) {
+            // 构建检测函数名称
+            const checkFunctionName = `hasChanges_${customerId.replace(/[^a-zA-Z0-9]/g, '')}`;
+            
+            // 检查是否有数据改动
+            if (typeof window[checkFunctionName] === 'function' && window[checkFunctionName]()) {
+                alert('数据有改动，请先点击保存，然后再点击废弃！');
+                return;
+            }
+            
+            // 调用废弃客户函数
+            discardCustomer(customerId);
         }
         
         // 废弃客户（移至公海池）
